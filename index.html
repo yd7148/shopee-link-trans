@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Shopee 商品網址轉換器</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                "Microsoft JhengHei",
+                Arial,
+                sans-serif;
+            background: #f5f6f8;
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ee4d2d, #ff7337);
+            color: white;
+            padding: 30px;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .header h1 {
+            margin: 0 0 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .content {
+            background: white;
+            padding: 25px;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+
+        .btn-add {
+            background: #198754;
+            color: white;
+        }
+
+        .btn-convert-all {
+            background: #ee4d2d;
+            color: white;
+        }
+
+        .btn-clear {
+            background: #6c757d;
+            color: white;
+        }
+
+        .url-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .url-row {
+            display: grid;
+            grid-template-columns: 45px 1fr 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #e2e5e8;
+            border-radius: 10px;
+        }
+
+        .number {
+            text-align: center;
+            font-weight: bold;
+            color: #666;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 7px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+        }
+
+        input[type="text"]:focus {
+            border-color: #ee4d2d;
+            box-shadow: 0 0 0 3px rgba(238, 77, 45, 0.1);
+        }
+
+        .result {
+            background: #f1f8f4 !important;
+            border-color: #b7dfc8 !important;
+            color: #198754;
+        }
+
+        .result.error {
+            background: #fff5f5 !important;
+            border-color: #f1b0b7 !important;
+            color: #dc3545;
+        }
+
+        .row-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-convert {
+            background: #ee4d2d;
+            color: white;
+        }
+
+        .btn-copy {
+            background: #0d6efd;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .example {
+            margin-top: 25px;
+            padding: 18px;
+            background: #fff8f5;
+            border-left: 4px solid #ee4d2d;
+            border-radius: 6px;
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .example strong {
+            color: #ee4d2d;
+        }
+
+        .mobile-label {
+            display: none;
+        }
+
+        @media (max-width: 800px) {
+            .url-row {
+                grid-template-columns: 35px 1fr;
+            }
+
+            .row-buttons {
+                grid-column: 2;
+            }
+
+            .mobile-label {
+                display: block;
+                font-size: 12px;
+                color: #777;
+                margin-bottom: 3px;
+            }
+
+            .header h1 {
+                font-size: 23px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🛒 Shopee 商品網址轉換器</h1>
+        <p>
+            將 Shopee 商品網址自動轉換成簡潔的
+            <strong>/product/賣家ID/商品ID</strong> 格式
+        </p>
+    </div>
+
+    <div class="content">
+
+        <div class="toolbar">
+            <button class="btn-add" onclick="addRows(1)">
+                ＋ 增加網址
+            </button>
+
+            <button class="btn-convert-all" onclick="convertAll()">
+                ⚡ 全部轉換
+            </button>
+
+            <button class="btn-clear" onclick="clearAll()">
+                🗑 清空全部
+            </button>
+        </div>
+
+        <div id="urlList" class="url-list"></div>
+
+        <div id="status" class="status">
+            目前共有 20 個網址輸入欄位
+        </div>
+
+        <div class="example">
+            <strong>轉換範例：</strong><br><br>
+
+            原始網址：<br>
+            https://shopee.tw/商品名稱-i.2194757.25010779083?xptdk=xxxxx
+            <br><br>
+
+            轉換後：<br>
+            <strong>https://shopee.tw/product/2194757/25010779083</strong>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+
+    // 初始網址欄位數量
+    const INITIAL_ROWS = 20;
+
+    // Shopee 網域
+    const SHOPEE_DOMAINS = [
+        "shopee.tw",
+        "www.shopee.tw"
+    ];
+
+
+    // ==========================================
+    // 初始化
+    // ==========================================
+
+    document.addEventListener("DOMContentLoaded", function () {
+        addRows(INITIAL_ROWS);
+    });
+
+
+    // ==========================================
+    // 增加網址欄位
+    // ==========================================
+
+    function addRows(count = 1) {
+
+        const list = document.getElementById("urlList");
+
+        for (let i = 0; i < count; i++) {
+
+            const row = document.createElement("div");
+
+            row.className = "url-row";
+
+            row.innerHTML = `
+
+                <div class="number"></div>
+
+                <div>
+                    <div class="mobile-label">原始網址</div>
+
+                    <input
+                        type="text"
+                        class="source-url"
+                        placeholder="請貼上 Shopee 商品網址..."
+                        onkeydown="handleEnter(event)"
+                    >
+                </div>
+
+                <div>
+                    <div class="mobile-label">轉換結果</div>
+
+                    <input
+                        type="text"
+                        class="result"
+                        placeholder="轉換後網址會出現在這裡"
+                        readonly
+                    >
+                </div>
+
+                <div class="row-buttons">
+
+                    <button
+                        class="btn-convert"
+                        onclick="convertRow(this)"
+                        title="轉換"
+                    >
+                        轉換
+                    </button>
+
+                    <button
+                        class="btn-copy"
+                        onclick="copyRow(this)"
+                        title="複製"
+                    >
+                        複製
+                    </button>
+
+                    <button
+                        class="btn-delete"
+                        onclick="deleteRow(this)"
+                        title="刪除"
+                    >
+                        ×
+                    </button>
+
+                </div>
+            `;
+
+            list.appendChild(row);
+        }
+
+        updateNumbers();
+    }
+
+
+    // ==========================================
+    // 更新編號
+    // ==========================================
+
+    function updateNumbers() {
+
+        const rows = document.querySelectorAll(".url-row");
+
+        rows.forEach((row, index) => {
+            row.querySelector(".number").textContent =
+                (index + 1) + ".";
+        });
+
+        document.getElementById("status").textContent =
+            `目前共有 ${rows.length} 個網址輸入欄位`;
+    }
+
+
+    // ==========================================
+    // Shopee 網址轉換核心
+    // ==========================================
+
+    function convertShopeeUrl(inputUrl) {
+
+        if (!inputUrl || !inputUrl.trim()) {
+            return "";
+        }
+
+        let urlText = inputUrl.trim();
+
+        // 如果使用者沒有輸入 https://
+        if (!/^https?:\/\//i.test(urlText)) {
+            urlText = "https://" + urlText;
+        }
+
+        let url;
+
+        try {
+            url = new URL(urlText);
+        } catch (error) {
+            return null;
+        }
+
+
+        // 確認是不是 Shopee
+        const hostname = url.hostname.toLowerCase();
+
+        if (!SHOPEE_DOMAINS.includes(hostname)) {
+            return null;
+        }
+
+
+        /*
+         * Shopee 常見商品網址格式：
+         *
+         * https://shopee.tw/商品名稱-i.2194757.25010779083
+         *
+         * 最後會得到：
+         *
+         * shopId = 2194757
+         * itemId = 25010779083
+         */
+
+
+        // 從 pathname 尋找 -i.shopId.itemId
+        const match = url.pathname.match(
+            /-i\.(\d+)\.(\d+)(?:\/)?$/i
+        );
+
+
+        if (!match) {
+            return null;
+        }
+
+
+        const shopId = match[1];
+        const itemId = match[2];
+
+
+        return `https://shopee.tw/product/${shopId}/${itemId}`;
+    }
+
+
+    // ==========================================
+    // 轉換單列
+    // ==========================================
+
+    function convertRow(button) {
+
+        const row = button.closest(".url-row");
+
+        const source = row.querySelector(".source-url");
+        const result = row.querySelector(".result");
+
+        const originalUrl = source.value.trim();
+
+        result.classList.remove("error");
+
+
+        if (!originalUrl) {
+
+            result.value = "";
+
+            return;
+        }
+
+
+        const converted = convertShopeeUrl(originalUrl);
+
+
+        if (converted) {
+
+            result.value = converted;
+
+        } else {
+
+            result.value = "❌ 無法辨識 Shopee 商品網址";
+
+            result.classList.add("error");
+        }
+    }
+
+
+    // ==========================================
+    // 全部轉換
+    // ==========================================
+
+    function convertAll() {
+
+        const rows = document.querySelectorAll(".url-row");
+
+        let success = 0;
+        let failed = 0;
+        let empty = 0;
+
+
+        rows.forEach(row => {
+
+            const source = row.querySelector(".source-url");
+            const result = row.querySelector(".result");
+
+            const originalUrl = source.value.trim();
+
+            result.classList.remove("error");
+
+
+            if (!originalUrl) {
+
+                result.value = "";
+
+                empty++;
+
+                return;
+            }
+
+
+            const converted = convertShopeeUrl(originalUrl);
+
+
+            if (converted) {
+
+                result.value = converted;
+
+                success++;
+
+            } else {
+
+                result.value = "❌ 無法辨識 Shopee 商品網址";
+
+                result.classList.add("error");
+
+                failed++;
+            }
+
+        });
+
+
+        document.getElementById("status").textContent =
+            `轉換完成：成功 ${success} 筆，失敗 ${failed} 筆，空白 ${empty} 筆`;
+    }
+
+
+    // ==========================================
+    // 複製結果
+    // ==========================================
+
+    async function copyRow(button) {
+
+        const row = button.closest(".url-row");
+
+        const result = row.querySelector(".result");
+
+        const value = result.value.trim();
+
+
+        if (!value || value.startsWith("❌")) {
+
+            alert("目前沒有可以複製的轉換結果");
+
+            return;
+        }
+
+
+        try {
+
+            await navigator.clipboard.writeText(value);
+
+            const originalText = button.textContent;
+
+            button.textContent = "✓ 已複製";
+
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 1200);
+
+        } catch (error) {
+
+            // 備用複製方式
+            result.select();
+            document.execCommand("copy");
+
+            alert("網址已複製");
+        }
+    }
+
+
+    // ==========================================
+    // 刪除單列
+    // ==========================================
+
+    function deleteRow(button) {
+
+        const row = button.closest(".url-row");
+
+        row.remove();
+
+        updateNumbers();
+    }
+
+
+    // ==========================================
+    // 清空全部
+    // ==========================================
+
+    function clearAll() {
+
+        const rows = document.querySelectorAll(".url-row");
+
+        rows.forEach(row => {
+
+            row.querySelector(".source-url").value = "";
+
+            row.querySelector(".result").value = "";
+
+            row.querySelector(".result").classList.remove("error");
+
+        });
+
+        updateNumbers();
+    }
+
+
+    // ==========================================
+    // Enter 快速轉換
+    // ==========================================
+
+    function handleEnter(event) {
+
+        if (event.key === "Enter") {
+
+            const row = event.target.closest(".url-row");
+
+            const button = row.querySelector(".btn-convert");
+
+            convertRow(button);
+        }
+    }
+
+</script>
+
+</body>
+</html>
